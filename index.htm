@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Super Pong Challenge</title>
+    <style>
+        :root {
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --bg: #0f172a;
+            --text: #f8fafc;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text);
+            user-select: none;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.9);
+            transition: opacity 0.5s;
+        }
+
+        .menu-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        h1 { margin-bottom: 10px; font-size: 2rem; color: var(--primary); }
+        .stats { margin-bottom: 20px; font-size: 1.1rem; }
+
+        .characters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .char-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .char-btn:hover { border-color: var(--primary); background: rgba(255, 255, 255, 0.2); }
+        .char-btn img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 5px; }
+        .char-btn span { font-weight: bold; font-size: 0.9rem; }
+
+        #game-canvas {
+            display: block;
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.6);
+        }
+
+        .btn-reset {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 0.8rem;
+        }
+
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 20;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="menu-card">
+            <h1>Обери суперника</h1>
+            <div class="stats">
+                🏆 Рекорд: <span id="high-score">0</span><br>
+                💀 Поразок: <span id="total-losses">0</span>
+            </div>
+            
+            <div class="characters">
+                <div class="char-btn" onclick="startGame('Tito.png')">
+                    <img src="Tito.png" alt="Tito">
+                    <span>Тіто</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Smartik.png')">
+                    <img src="Smartik.png" alt="Smartik">
+                    <span>Смартик</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Junior.png')">
+                    <img src="Junior.png" alt="Junior">
+                    <span>Джуніор</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Fil.png')">
+                    <img src="Fil.png" alt="Fil">
+                    <span>Філ</span>
+                </div>
+            </div>
+
+            <button class="btn-reset" onclick="resetStats()">Скинути рекорд</button>
+        </div>
+    </div>
+
+    <div id="game-over">
+        <h1 style="color: #ef4444;">ПРОГРАШ!</h1>
+        <p>Твій рахунок: <span id="final-score">0</span></p>
+        <button class="char-btn" style="padding: 10px 30px;" onclick="location.reload()">Меню</button>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const uiLayer = document.getElementById('ui-layer');
+        const gameOverScreen = document.getElementById('game-over');
+        
+        let record = localStorage.getItem('pong_record') || 0;
+        let losses = localStorage.getItem('pong_losses') || 0;
+        
+        document.getElementById('high-score').innerText = record;
+        document.getElementById('total-losses').innerText = losses;
+
+        let gameRunning = false;
+        let score = 0;
+        
+        const paddle = { width: 100, height: 15, x: 0, y: 0 };
+        const aiPaddle = { width: 100, height: 15, x: 0, y: 30 };
+        const ball = { x: 0, y: 0, radius: 10, dx: 4, dy: 4 };
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            paddle.y = canvas.height - 40;
+            paddle.width = canvas.width * 0.25;
+            aiPaddle.width = canvas.width * 0.25;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Керування
+        function movePaddle(e) {
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            paddle.x = clientX - paddle.width / 2;
+            
+            // Межі
+            if (paddle.x < 0) paddle.x = 0;
+            if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
+        }
+
+        window.addEventListener('mousemove', movePaddle);
+        window.addEventListener('touchmove', (e) => {
+            movePaddle(e);
+            e.preventDefault();
+        }, { passive: false });
+
+        function startGame(imgSrc) {
+            canvas.style.backgroundImage = `url('${imgSrc}')`;
+            uiLayer.classList.add('hidden');
+            gameRunning = true;
+            score = 0;
+            resetBall();
+            animate();
+        }
+
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.dx = (Math.random() - 0.5) * 10;
+            ball.dy = 5;
+        }
+
+        function resetStats() {
+            localStorage.setItem('pong_record', 0);
+            localStorage.setItem('pong_losses', 0);
+            location.reload();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            losses++;
+            localStorage.setItem('pong_losses', losses);
+            if (score > record) {
+                localStorage.setItem('pong_record', score);
+            }
+            document.getElementById('final-score').innerText = score;
+            gameOverScreen.style.display = 'block';
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // М'яч
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#fff";
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#00f2fe";
+            ctx.fill();
+            ctx.closePath();
+
+            // Ракетка гравця
+            ctx.fillStyle = "#4facfe";
+            ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+
+            // Ракетка суперника (завжди відбиває)
+            ctx.fillStyle = "#ff4b2b";
+            aiPaddle.x = ball.x - aiPaddle.width / 2; // Ідеальний AI
+            ctx.fillRect(aiPaddle.x, aiPaddle.y, aiPaddle.width, aiPaddle.height);
+
+            // Рахунок на екрані
+            ctx.font = "bold 40px Arial";
+            ctx.fillStyle = "rgba(255,255,255,0.3)";
+            ctx.textAlign = "center";
+            ctx.fillText(score, canvas.width / 2, canvas.height / 2 + 50);
+        }
+
+        function update() {
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // Відскок від стін
+            if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+                ball.dx *= -1;
+            }
+
+            // Відскок від AI (зверху)
+            if (ball.y - ball.radius <= aiPaddle.y + aiPaddle.height) {
+                ball.dy = Math.abs(ball.dy); 
+            }
+
+            // Відскок від гравця (знизу)
+            if (ball.y + ball.radius >= paddle.y && 
+                ball.x > paddle.x && 
+                ball.x < paddle.x + paddle.width) {
+                ball.dy = -Math.abs(ball.dy) * 1.05; // Прискорюємо м'яч
+                ball.dx += (ball.x - (paddle.x + paddle.width / 2)) * 0.2; // Додаємо кут
+                score++;
+            }
+
+            // Поразка
+            if (ball.y > canvas.height) {
+                gameOver();
+            }
+        }
+
+        function animate() {
+            if (!gameRunning) return;
+            draw();
+            update();
+            requestAnimationFrame(animate);
+        }
+    </script>
+</body>
+</html>
