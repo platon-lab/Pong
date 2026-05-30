@@ -48,16 +48,36 @@
             text-align: center;
             max-width: 90%;
             width: 400px;
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh; /* Обмежуємо висоту картки, щоб вона влазила на будь-який екран */
         }
 
-        h1 { margin-bottom: 10px; font-size: 2rem; color: var(--primary); }
-        .stats { margin-bottom: 20px; font-size: 1.1rem; }
+        h1 { margin-bottom: 10px; font-size: 2rem; color: var(--primary); flex-shrink: 0; }
+        .stats { margin-bottom: 20px; font-size: 1.1rem; flex-shrink: 0; }
 
+        /* Додано гортання (скрол) для блоку з героями */
         .characters {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
             margin-bottom: 20px;
+            overflow-y: auto; /* Дозволяє гортати вниз і вгору */
+            max-height: 300px; /* Фіксована висота для зони прокручування */
+            padding-right: 5px;
+        }
+
+        /* Стильний тонкий скролбар, щоб не псував дизайн */
+        .characters::-webkit-scrollbar {
+            width: 6px;
+        }
+        .characters::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+        }
+        .characters::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
         }
 
         .char-btn {
@@ -89,6 +109,7 @@
             cursor: pointer;
             margin-top: 15px;
             font-size: 0.8rem;
+            flex-shrink: 0;
         }
 
         #game-over {
@@ -115,6 +136,7 @@
             </div>
             
             <div class="characters">
+                <!-- Старі герої -->
                 <div class="char-btn" onclick="startGame('Tito.png')">
                     <img src="Tito.png" alt="Tito">
                     <span>Тіто</span>
@@ -132,12 +154,70 @@
                     <span>Філ</span>
                 </div>
                 <div class="char-btn" onclick="startGame('Milka.png')">
-                    <img src="Milka.png" alt="Fil">
+                    <img src="Milka.png" alt="Milka">
                     <span>Мілка</span>
                 </div>
                 <div class="char-btn" onclick="startGame('Bark.png')">
-                    <img src="Bark.png" alt="Fil">
+                    <img src="Bark.png" alt="Bark">
                     <span>Барк</span>
+                </div>
+
+                <!-- Нові 14 героїв -->
+                <div class="char-btn" onclick="startGame('Persik.png')">
+                    <img src="Persik.png" alt="Persik">
+                    <span>Персик</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Spike.png')">
+                    <img src="Spike.png" alt="Spike">
+                    <span>Спайк</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Alyonka.png')">
+                    <img src="Alyonka.png" alt="Alyonka">
+                    <span>Альонка</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Lilu.png')">
+                    <img src="Lilu.png" alt="Lilu">
+                    <span>Лілу</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Manya.png')">
+                    <img src="Manya.png" alt="Manya">
+                    <span>Маня</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Liza.png')">
+                    <img src="Liza.png" alt="Liza">
+                    <span>Ліза</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Grivna.png')">
+                    <img src="Grivna.png" alt="Grivna">
+                    <span>Гривня</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Ben.png')">
+                    <img src="Ben.png" alt="Ben">
+                    <span>Бен</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Goldi.png')">
+                    <img src="Goldi.png" alt="Goldi">
+                    <span>Голді</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Raf.png')">
+                    <img src="Raf.png" alt="Raf">
+                    <span>Раф</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Veles.png')">
+                    <img src="Veles.png" alt="Veles">
+                    <span>Велес</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Masha.png')">
+                    <img src="Masha.png" alt="Masha">
+                    <span>Маша</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Brilliantik.png')">
+                    <img src="Brilliantik.png" alt="Brilliantik">
+                    <span>Брілліантік</span>
+                </div>
+                <div class="char-btn" onclick="startGame('Richik.png')">
+                    <img src="Richik.png" alt="Richik">
+                    <span>Річік</span>
                 </div>
             </div>
 
