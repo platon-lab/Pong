@@ -63,6 +63,7 @@
             gap: 15px;
             margin-bottom: 20px;
             overflow-y: auto; /* Дозволяє гортати вниз і вгору */
+            -webkit-overflow-scrolling: touch; /* Плавний скрол на iOS та Android */
             max-height: 300px; /* Фіксована висота для зони прокручування */
             padding-right: 5px;
         }
@@ -285,8 +286,10 @@
 
         window.addEventListener('mousemove', movePaddle);
         window.addEventListener('touchmove', (e) => {
-            movePaddle(e);
-            e.preventDefault();
+            if (gameRunning) {
+                movePaddle(e);
+                e.preventDefault();
+            }
         }, { passive: false });
 
         function startGame(imgSrc) {
